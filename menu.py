@@ -15,11 +15,7 @@ class Menu():
         self.Hra.okno.blit(self.Hra.okno, (0, 0))
         pygame.display.update()
         self.Hra.klavesy()
-    def exit(self):
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
+
 class HlavniMenu(Menu):
     def __init__(self, Hra):
         Menu.__init__(self,Hra)
@@ -68,7 +64,8 @@ class HlavniMenu(Menu):
         self.pohyb_cursor()
         if self.Hra.enter:
             if self.state == "Start":
-                self.Hra.play = True
+                #self.Hra.play = 1
+                self.Hra.tohle_menu = self.Hra.game_menu1
             elif self.state == "Options":
                 self.Hra.tohle_menu = self.Hra.options
             elif self.state == "Quit":
@@ -76,6 +73,7 @@ class HlavniMenu(Menu):
             self.runscreen = False
         if self.Hra.escape:
             self.Hra.tohle_menu = self.Hra.quits
+            self.runscreen = False
 class OptionsMenu(Menu):
     def __init__(self, Hra):
         Menu.__init__(self,Hra)
@@ -190,13 +188,11 @@ class ResolutionMenu(Menu):
         self.pohyb_cursor()
         if self.Hra.enter:
             if self.state == "1024x768y":
-                WIDTH = 1024
-                HEIGHT = 768
+                pass
             elif self.state == "800x600y":
-                WIDTH = 800
-                HEIGHT = 600
+                pass
             elif self.state == "Resolution":
-                self.Hra.tohle_menu = self.Hra.resolution
+                pass
             self.runscreen = False
         elif self.Hra.escape:
             pygame.quit()
@@ -211,7 +207,6 @@ class QuitsMenu(Menu):
     def ukazat_menu(self):
         self.runscreen = True
         while self.runscreen:
-            self.exit()
             self.Hra.eventy()
             self.check_input()
             self.Hra.okno.fill((0,0,0))
@@ -240,10 +235,71 @@ class QuitsMenu(Menu):
             elif self.state == "NO":
                 self.Hra.tohle_menu = self.Hra.main_menu
                 self.runscreen = False
-        if self.Hra.escape:
+        elif self.Hra.escape:
+            self.runscreen = False
             pygame.quit()
             sys.exit()
 
+class Game_menu1(Menu):
+    def __init__(self, Hra):
+        Menu.__init__(self, Hra)
+        self.state = "Easy"
+        self.Easyx, self.Easyy = self.prostredni_sirka , self.prostredni_vyska + 20
+        self.Normalx, self.Normaly = self.prostredni_sirka , self.prostredni_vyska + 70
+        self.Hardx, self.Hardy = self.prostredni_sirka, self.prostredni_vyska + 120
+        self.cursor_rect.midtop = (self.Easyx + self.offset, self.Easyy)
+    def ukazat_menu(self):
+        self.runscreen=True
+        while self.runscreen:
+            self.Hra.eventy()
+            self.check_input()
+            self.Hra.okno.fill((0,0,0))
+            self.text()
+            self.vyber_cursor()
+            self.pozadi()
+    def text(self):
+        self.Hra.vyber_textu("Vyber difficulty hry", 70, WIDTH / 2, HEIGHT / 2 - 170)
+        self.Hra.vyber_textu("Easy", 40, self.Easyx, self.Easyy)
+        self.Hra.vyber_textu(" Normal", 40, self.Normalx, self.Normaly)
+        self.Hra.vyber_textu("Hard", 40, self.Hardx, self.Hardy)
+    def pohyb_cursor(self):
+        if self.Hra.down:
+            if self.state == "Easy":
+                self.cursor_rect.midtop = (self.Normalx + self.offset, self.Normaly)
+                self.state = "Normal"
+            elif self.state == "Normal":
+                self.cursor_rect.midtop = (self.Hardx + self.offset, self.Hardy)
+                self.state = "Hard"
+            elif self.state == "Hard":
+                self.cursor_rect.midtop = (self.Easyx + self.offset, self.Easyy)
+                self.state = "Easy"
+        elif self.Hra.up:
+            if self.state == "Start":
+                self.cursor_rect.midtop = (self.Hardx + self.offset, self.Hardy)
+                self.state = "Hard"
+            elif self.state == "Hard":
+                self.cursor_rect.midtop = (self.Normalx + self.offset, self.Normaly)
+                self.state = "Normal"
+            elif self.state == "Normal":
+                self.cursor_rect.midtop = (self.Easyx + self.offset, self.Easyy)
+                self.state = "Easy"
+    def check_input(self):
+        self.pohyb_cursor()
+        if self.Hra.enter:
+            if self.state == "Easy":
+                self.Hra.play = 1
+                self.Hra.zivot += 100
+            elif self.state == "Normal":
+                pass
+            elif self.state == "Hard":
+                pass
+            self.runscreen = False
+        elif self.Hra.escape:
+            pygame.quit()
+            sys.exit()
+        if self.Hra.back:
+            self.Hra.tohle_menu = self.Hra.main_menu
+            self.runscreen = False
 
 class ingame_stop_menu(Menu):
     def __init__(self, Hra):

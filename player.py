@@ -17,7 +17,6 @@ class Player(pygame.sprite.Sprite):
         pygame.sprite.Sprite.__init__(self, self.groups)
         self.player_front = self.Hra.player_img #pygame.image.load("player.png")
         self.image = self.player_front
-        #self.rect = self.image.get_rect(topleft= pozice)
         self.rect = self.image.get_rect()
         #self.x = x * MAP_SIZE
         #self.y = y * MAP_SIZE
@@ -30,7 +29,7 @@ class Player(pygame.sprite.Sprite):
         self.vel = vec(0, 0)
         self.pos = vec(x,y)
         self.left, self.right, self.play_up, self.play_down = False, False, False, False
-        self.zivoty = ZIVOT
+        self.zivoty = self.Hra.zivot
     def update(self):
         self.pohyb()
         self.pos += self.vel * self.Hra.dt
@@ -38,6 +37,7 @@ class Player(pygame.sprite.Sprite):
         self.collide_with_walls('x')
         self.rect.y = self.pos.y
         self.collide_with_walls('y')
+        self.score_collide()
     def pohyb(self):
         self.vel = vec(0, 0)
         self.key = pygame.key.get_pressed()
@@ -139,6 +139,10 @@ class Player(pygame.sprite.Sprite):
                     self.pos.y = hits[0].rect.bottom
                 self.vel.y = 0
                 self.rect.y = self.pos.y
+    def score_collide(self):
+        if pygame.sprite.spritecollide(self, self.Hra.score_sprites, True):
+            self.Hra.score += 1
+
 class Enemy(pygame.sprite.Sprite):
     def __init__(self, Hra, x, y):
         self.groups = Hra.all_sprites, Hra.enemy_sprites
@@ -204,3 +208,14 @@ class Hit_Box(pygame.sprite.Sprite):
         self.y = y
         self.rect.x = x
         self.rect.y = y
+class Score(pygame.sprite.Sprite):
+    def __init__(self, Hra, x, y):
+        self.groups = Hra.score_sprites
+        pygame.sprite.Sprite.__init__(self, self.groups)
+        self.Hra = Hra
+        self.image = Hra.score_img
+        self.rect = self.image.get_rect()
+        self.rect.center = (x,y)
+    def update(self):
+        if pygame.sprite.collide_rect(self, self.Hra.player):
+            self.kill()

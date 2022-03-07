@@ -8,27 +8,27 @@ from camera import *
 from os import path
 from tilemapa import *
 
-def draw_player_health(surf, x, y, pct):
-    if pct < 0:
-        pct = 0
+def draw_player_health(surf, x, y, p):
+    if p < 0:
+        p = 0
     BAR_DELKA = 100
     BAR_VYSKA = 20
-    fill = pct * BAR_DELKA
+    fill = p * BAR_DELKA
     outline_rect = pygame.Rect(x, y, BAR_DELKA, BAR_VYSKA)
     fill_rect = pygame.Rect(x, y, fill, BAR_VYSKA)
-    if pct > 0.6:
+    if p > 0.6:
         col = GREEN
-    elif pct > 0.3:
+    elif p > 0.3:
         col = YELLOW
     else:
         col = RED
     pygame.draw.rect(surf, col, fill_rect)
     pygame.draw.rect(surf, WHITE, outline_rect, 2)
-
 class Game:
     def __init__(self):
         pygame.init()
-        self.run, self.play = True, False
+        self.run = True
+        self.play = 0
         self.clock = pygame.time.Clock()
         self.monitor_size = [pygame.display.Info().current_w, pygame.display.Info().current_h]
         self.okno = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE)
@@ -48,6 +48,7 @@ class Game:
         self.resolution = ResolutionMenu(self)
         self.tohle_menu = self.main_menu
         self.ingame_quit = Ingame_QuitsMenu(self)
+        self.game_menu1 = Game_menu1(self)
         # self.player_menu = Player_menu(self)
         self.fullscreen = False
         self.BLOCK_LAYER = 1
@@ -55,6 +56,8 @@ class Game:
         self.GRIDHEIGHT = HEIGHT / MAP_SIZE
         self.lightgrey = (((80, 80, 80)))
         pygame.key.set_repeat(500, 100)
+        self.score = 0
+        self.zivot = 0
         self.data()
 
     def data(self):
@@ -64,6 +67,7 @@ class Game:
         self.map = Tilemap(path.join(map_folder, 'map.tmx'))
         self.map_img = self.map.make_map()
         self.map_rect = self.map_img.get_rect()
+        self.score_img = pygame.image.load(path.join(img_folder, "score.png")).convert_alpha()
         self.player_img = pygame.image.load(path.join(img_folder, "player.png")).convert_alpha()
         self.mob_img = pygame.image.load(path.join(img_folder, "zombie.png")).convert_alpha()
         self.player_left = [pygame.image.load(path.join(img_folder, "player_left1.png")).convert_alpha(),pygame.image.load(path.join(img_folder, "player_left2.png")).convert_alpha(),pygame.image.load(path.join(img_folder, "player_left3.png")).convert_alpha(),pygame.image.load(path.join(img_folder, "player_left4.png")).convert_alpha(),pygame.image.load(path.join(img_folder, "player_left5.png")).convert_alpha(),pygame.image.load(path.join(img_folder, "player_left6.png")).convert_alpha(),pygame.image.load(path.join(img_folder, "player_left7.png")).convert_alpha(),pygame.image.load(path.join(img_folder, "player_left8.png")).convert_alpha(),pygame.image.load(path.join(img_folder, "player_left9.png")).convert_alpha()]
@@ -83,6 +87,8 @@ class Game:
         for sprite in self.all_sprites:
             self.okno.blit(sprite.image, self.camera.apply(sprite))
         draw_player_health(self.okno, 10, 10, self.player.zivoty / ZIVOT)
+        self.vyber_textu(str(self.zivot), 20, 130, 20)
+        self.vyber_textu('Score:' + str(self.score), 20, 50, 100)
         pygame.display.flip()
         
 
@@ -96,6 +102,7 @@ class Game:
         self.all_sprites = pygame.sprite.LayeredUpdates()
         self.walls_sprites = pygame.sprite.Group()
         self.enemy_sprites = pygame.sprite.Group()
+        self.score_sprites = pygame.sprite.Group()
         """for row, xx in enumerate(self.map.data):
             for col, yy in enumerate(xx):
                 if yy == "P":
@@ -111,18 +118,21 @@ class Game:
                 Enemy(self, hitbox.x, hitbox.y)
             if hitbox.name == 'Wall':
                 Hit_Box(self, hitbox.x, hitbox.y, hitbox.width, hitbox.height)
+            if hitbox.name == "Score":
+                self.score = Score(self, hitbox.x, hitbox.y)
         self.camera = Camera(self.map.width, self.map.height)
         self.pause = False
 
     def update(self):
         self.all_sprites.update()
+        self.score_sprites.update(self.score)
         self.camera.update(self.player)
     # hlavni loop
     def loop(self):
-        while self.play:
+        while self.play == 1:
             self.events()
             if self.enter:
-                self.play = False
+                self.play == 0
             self.dt = self.clock.tick(FPS) / 1000.0
             self.draw()
             #self.povidani()
@@ -135,9 +145,18 @@ class Game:
             if event.type == pygame.QUIT:
                 self.play = False
                 self.run = False
+            if event.type == pygame.VIDEORESIZE:
+                if not self.fullscreen:
+                    self.okno = pygame.display.set_mode((event.w, event.h), pygame.RESIZABLE)
             if event.type == pygame.KEYDOWN:
-                if event.type == pygame.K_p:
+                if event.key == pygame.K_p:
                     self.pause = not self.pause
+                if event.key == pygame.K_f:
+                    self.fullscreen = not self.fullscreen
+                    if self.fullscreen:
+                        self.okno = pygame.display.set_mode(self.monitor_size, pygame.FULLSCREEN)
+                    else:
+                        self.okno = pygame.display.set_mode((WIDTH, HEIGHT),pygame.RESIZABLE)
     def eventy(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -158,11 +177,11 @@ class Game:
                 if event.key == pygame.K_ESCAPE:
                     self.escape = True
                 if event.key == pygame.K_f:
-                    fullscreen = not self.fullscreen
-                    if fullscreen:
+                    self.fullscreen = not self.fullscreen
+                    if self.fullscreen:
                         self.okno = pygame.display.set_mode(self.monitor_size, pygame.FULLSCREEN)
                     else:
-                        self.okno = pygame.display.set_mode((self.okno.get_width(), self.okno.get_height()),pygame.RESIZABLE)
+                        self.okno = pygame.display.set_mode((WIDTH, HEIGHT),pygame.RESIZABLE)
 
     def klavesy(self):
         self.up, self.down, self.enter, self.back = False, False, False, False
