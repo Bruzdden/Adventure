@@ -119,13 +119,12 @@ class Game:
             if hitbox.name == 'Wall':
                 Hit_Box(self, hitbox.x, hitbox.y, hitbox.width, hitbox.height)
             if hitbox.name == "Score":
-                self.score = Score(self, hitbox.x, hitbox.y)
+                self.body = Score(self, hitbox.x, hitbox.y)
         self.camera = Camera(self.map.width, self.map.height)
         self.pause = False
 
     def update(self):
         self.all_sprites.update()
-        self.score_sprites.update(self.score)
         self.camera.update(self.player)
     # hlavni loop
     def loop(self):
