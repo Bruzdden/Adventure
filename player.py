@@ -210,7 +210,7 @@ class Hit_Box(pygame.sprite.Sprite):
         self.rect.y = y
 class Score(pygame.sprite.Sprite):
     def __init__(self, Hra, x, y):
-        self.groups = Hra.score_sprites
+        self.groups = Hra.all_sprites, Hra.score_sprites
         pygame.sprite.Sprite.__init__(self, self.groups)
         self.Hra = Hra
         self.image = Hra.score_img
